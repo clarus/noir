@@ -296,6 +296,17 @@ pub fn check_crate(
         diagnostic.in_file(file_id)
     }));
 
+    println!("Checking crate: {:?}", crate_id);
+    let nodes = to_string_pretty(&context.def_interner.nodes).unwrap();
+    let nodes_path = context.package_build_path.join("hir.json");
+    std::fs::write(nodes_path, nodes).unwrap();
+    let def_map = context.def_map(&crate_id).unwrap();
+    let root_module = &def_map.modules()[def_map.root().0];
+    let root_module_definition_names = root_module.definitions().values().keys().collect::<Vec<_>>();
+    println!("Root module definitions: {:#?}", root_module_definition_names);
+    let root_module_sub_module_names = root_module.children.keys().collect::<Vec<_>>();
+    println!("Root module sub-modules: {:#?}", root_module_sub_module_names);
+
     if has_errors(&errors, options.deny_warnings) {
         Err(errors)
     } else {
@@ -564,7 +575,7 @@ pub fn compile_no_check(
         let monomorphized_program = to_string_pretty(&program).unwrap();
         let monomorphized_program_path =
             context.package_build_path.join("monomorphized_program.json");
-        std::fs::write(&monomorphized_program_path, monomorphized_program).unwrap();
+        std::fs::write(monomorphized_program_path, monomorphized_program).unwrap();
     }
 
     // If user has specified that they want to see intermediate steps printed then we should
